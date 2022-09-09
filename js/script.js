@@ -1,49 +1,39 @@
-const filterByType = (type, ...values) => values.filter(value => typeof value === type),
+/* eslint-disable indent */
+const getData = (url) => fetch(url).then((respone) => respone.json());
 
-	hideAllResponseBlocks = () => {
-		const responseBlocksArray = Array.from(document.querySelectorAll('div.dialog__response-block'));
-		responseBlocksArray.forEach(block => block.style.display = 'none');
-	},
+const hideAllResponseBlocks = () => {
+  const responseBlocksArray = Array.from(
+    document.querySelectorAll("div.dialog__response-block")
+  );
+  responseBlocksArray.forEach((block) => (block.style.display = "none"));
+};
+const showResponseBlock = (blockSelector, msgText, spanSelector) => {
+  hideAllResponseBlocks();
+  document.querySelector(blockSelector).style.display = "block";
+  if (spanSelector) {
+    document.querySelector(spanSelector).textContent = msgText;
+  }
+};
+const showError = (msgText) =>
+  showResponseBlock(".dialog__response-block_error", msgText, "#error");
+const showResults = (msgText) =>
+  showResponseBlock(".dialog__response-block_ok", msgText, "#ok");
 
-	showResponseBlock = (blockSelector, msgText, spanSelector) => {
-		hideAllResponseBlocks();
-		document.querySelector(blockSelector).style.display = 'block';
-		if (spanSelector) {
-			document.querySelector(spanSelector).textContent = msgText;
-		}
-	},
+const renderData = (data) => {
+  const result = ["Тачка ", "Цена "];
+  result[0] += data.brand + " " + data.model;
+  result[1] += data.price;
+  showResults(result.join("; "));
+};
 
-	showError = msgText => showResponseBlock('.dialog__response-block_error', msgText, '#error'),
+const select = document.querySelector(".filter-form__input");
 
-	showResults = msgText => showResponseBlock('.dialog__response-block_ok', msgText, '#ok'),
-
-	showNoResults = () => showResponseBlock('.dialog__response-block_no-results'),
-
-	tryFilterByType = (type, values) => {
-		try {
-			const valuesArray = eval(`filterByType('${type}', ${values})`).join(", ");
-			const alertMsg = (valuesArray.length) ?
-				`Данные с типом ${type}: ${valuesArray}` :
-				`Отсутствуют данные типа ${type}`;
-			showResults(alertMsg);
-		} catch (e) {
-			showError(`Ошибка: ${e}`);
-		}
-	};
-
-const filterButton = document.querySelector('#filter-btn');
-
-filterButton.addEventListener('click', e => {
-	const typeInput = document.querySelector('#type');
-	const dataInput = document.querySelector('#data');
-
-	if (dataInput.value === '') {
-		dataInput.setCustomValidity('Поле не должно быть пустым!');
-		showNoResults();
-	} else {
-		dataInput.setCustomValidity('');
-		e.preventDefault();
-		tryFilterByType(typeInput.value.trim(), dataInput.value.trim());
-	}
+select.addEventListener("change", (e) => {
+  try {
+    getData("cars.json")
+      .then((data) => renderData(data.cars[e.target.options.selectedIndex]))
+      .catch((error) => showError(`Error: ${error}`));
+  } catch (error) {
+    showError("error");
+  }
 });
-
